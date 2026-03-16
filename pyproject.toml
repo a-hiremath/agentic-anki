@@ -1,0 +1,56 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "anki-pipeline"
+version = "0.1.0"
+description = "Local, typed, provenance-aware artifact pipeline for generating Anki notes from STEM material"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.10,<3",
+    "pydantic-settings>=2.7,<3",
+    "pyyaml>=6.0",
+    "anthropic>=0.49",
+    "pymupdf4llm>=0.0.17",
+    "click>=8.1",
+    "rich>=13.9",
+]
+
+[project.scripts]
+anki-pipeline = "anki_pipeline.interfaces.cli:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/anki_pipeline"]
+
+[tool.hatch.build]
+sources = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "llm: marks tests that require a live ANTHROPIC_API_KEY (deselect with '-m not llm')",
+]
+
+[tool.ruff]
+src = ["src"]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "coverage>=7.0",
+    "ruff>=0.8",
+    "mypy>=1.13",
+]

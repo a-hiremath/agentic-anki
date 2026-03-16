@@ -1,0 +1,43 @@
+# Knowledge item type taxonomy
+# Each type has a description and the preferred note type for synthesis
+
+types:
+  definition:
+    description: "A statement that establishes the meaning of a term or concept"
+    preferred_note_type: STEMBasic
+    note_strategy: "Front: ask for definition. Back: precise definition with conditions."
+
+  mechanism:
+    description: "An explanation of how a process or system works"
+    preferred_note_type: STEMBasic
+    note_strategy: "Front: ask how X works. Back: step-by-step mechanism."
+
+  distinction:
+    description: "A contrast between two or more related but different concepts"
+    preferred_note_type: STEMCloze
+    note_strategy: "Cloze: fill in distinguishing properties of each concept."
+
+  formula:
+    description: "A mathematical or symbolic relationship"
+    preferred_note_type: STEMBasic
+    note_strategy: "Front: describe what the formula gives. Back: the formula with variable definitions."
+
+  procedure:
+    description: "An ordered sequence of steps to accomplish a task"
+    preferred_note_type: STEMCloze
+    note_strategy: "Cloze: fill in key steps or conditions in the procedure."
+
+  exception:
+    description: "A case where a general rule does not apply"
+    preferred_note_type: STEMBasic
+    note_strategy: "Front: general rule + ask for exception. Back: exception with conditions."
+
+  heuristic:
+    description: "A rule of thumb or practical guideline"
+    preferred_note_type: STEMBasic
+    note_strategy: "Front: situation. Back: recommended approach and why."
+
+  unknown:
+    description: "Type could not be determined — will be rejected in filtering"
+    preferred_note_type: null
+    note_strategy: null

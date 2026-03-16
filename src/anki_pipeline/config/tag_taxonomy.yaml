@@ -1,0 +1,30 @@
+# Tag taxonomy - allowed subject tag roots and subtags
+
+roots:
+  math:
+    label: "Mathematics"
+    subtags:
+      calc1c: "Calculus 1C (Integration)"
+      calc2: "Calculus 2 (Multivariable)"
+      linalg: "Linear Algebra"
+      diffeq: "Differential Equations"
+      analysis: "Real Analysis"
+      discrete: "Discrete Mathematics"
+
+  phys:
+    label: "Physics"
+    subtags:
+      eandm: "Electricity and Magnetism"
+      mechanics: "Classical Mechanics"
+      thermo: "Thermodynamics"
+      qm: "Quantum Mechanics"
+      waves: "Waves and Optics"
+
+  cs:
+    label: "Computer Science"
+    subtags:
+      cpp: "C++ Programming"
+      algorithms: "Algorithms and Data Structures"
+      os: "Operating Systems"
+      networks: "Computer Networks"
+      ml: "Machine Learning"

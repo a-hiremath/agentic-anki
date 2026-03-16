@@ -1,0 +1,3 @@
+# Anki import for deck: Math::Calc1C
+STEMBasic	Math::Calc1C	EXTERNAL_ID_1	What is the definition of the definite integral?	The limit of a Riemann sum: $\int_a^b f(x)\,dx = \lim_{n\to\infty}\sum_{i=1}^n f(x_i^*)\Delta x$	FTC connects integration and differentiation.	Lecture 3, p.5	math.calc1c type::definition
+STEMCloze	Math::Calc1C	EXTERNAL_ID_2	The Fundamental Theorem of Calculus Part 1 states that if $g(x) = \int_a^x f(t)\,dt$ then $g'(x) = $ {{c1::$f(x)$}}.	FTC Part 1 is the basis for differentiation of integrals.	Lecture 3, p.7	math.calc1c type::formula

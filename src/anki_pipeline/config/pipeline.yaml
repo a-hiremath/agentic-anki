@@ -1,0 +1,39 @@
+db_path: pipeline.db
+model: claude-opus-4-6
+
+chunking:
+  min_chunk_tokens: 50
+  max_chunk_tokens: 600
+  max_oversize_tolerance_tokens: 100
+  overlap_tokens: 0
+
+extraction:
+  max_items_per_chunk: 6
+  model: claude-opus-4-6
+  max_tokens: 2048
+
+grounding:
+  inferential_threshold: 0.7
+  model: claude-opus-4-6
+  max_tokens: 1024
+
+allocation:
+  min_claim_tokens: 5
+  max_claim_tokens: 200
+  hard_rank_threshold: 0.3
+  max_new_cards_per_run: 50
+  max_estimated_cost_per_run: 60.0
+
+validation:
+  min_front_chars: 10
+  max_front_chars: 500
+  max_back_chars: 2000
+  max_text_chars: 2000
+
+export:
+  output_dir: output
+  method: tsv
+
+review:
+  show_invalid: false
+  editor: null

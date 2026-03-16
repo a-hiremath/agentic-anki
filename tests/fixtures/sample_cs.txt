@@ -1,0 +1,32 @@
+C++ Memory Management
+
+Smart Pointers
+
+Modern C++ uses smart pointers to manage memory automatically, avoiding manual new/delete.
+
+unique_ptr provides exclusive ownership. Only one unique_ptr can point to a resource at a time. When the unique_ptr goes out of scope, it automatically deletes the managed object.
+
+shared_ptr provides shared ownership. Multiple shared_ptr instances can own the same object. The object is destroyed when the last shared_ptr owning it is destroyed (reference counting).
+
+weak_ptr is a non-owning reference to an object managed by shared_ptr. It does not contribute to the reference count. Use weak_ptr to break circular references.
+
+Key distinction: unique_ptr cannot be copied, only moved. shared_ptr can be copied.
+
+RAII Pattern
+
+Resource Acquisition Is Initialization (RAII) is a C++ programming technique where resource management is tied to object lifetime.
+
+The rule is: acquire a resource in the constructor, release it in the destructor. This guarantees cleanup even when exceptions are thrown.
+
+Examples of RAII: file handles (fstream), mutexes (lock_guard), memory (smart pointers).
+
+Exception Safety
+
+A function is exception-safe if it leaves the program in a valid state when an exception is thrown.
+
+Levels of exception safety:
+1. Basic guarantee: no resource leaks, all invariants maintained
+2. Strong guarantee: operation succeeds completely or has no effect (rollback semantics)
+3. No-throw guarantee: operation never throws
+
+Heuristic: Use the strong guarantee when performance allows; always provide at least the basic guarantee.
