@@ -16,6 +16,7 @@ dependencies = [
     "pymupdf4llm>=0.0.17",
     "click>=8.1",
     "rich>=13.9",
+    "pylatexenc>=2.10,<3",
 ]
 
 [project.scripts]

@@ -43,8 +43,8 @@ class MockLLMClient:
             raise KeyError(f"No mock response for {output_schema.__name__}")
         return self.responses[output_schema]
 
-    def raw_call(self, system: str, user: str, **kwargs: Any) -> str:
-        return "mock response"
+    def usage_summary(self) -> dict[str, int]:
+        return {"total_input_tokens": 0, "total_output_tokens": 0, "total_calls": len(self.call_log)}
 
 
 @pytest.fixture

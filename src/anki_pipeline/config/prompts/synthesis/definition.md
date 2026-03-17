@@ -18,4 +18,5 @@ Evidence: {{evidence_text}}
 - Front must be a question that has exactly one correct answer
 - Back must be the complete, precise definition
 - Do NOT include the answer in the front
-- Use LaTeX for any mathematical notation: $...$ for inline, $$...$$ for display
+- Use Anki-native MathJax delimiters for any mathematical notation: \(...\) for inline and \[...\] for display
+- Never use $...$ or $$...$$ delimiters

@@ -1,5 +1,5 @@
 db_path: pipeline.db
-model: claude-opus-4-6
+model: claude-sonnet-4-6
 
 chunking:
   min_chunk_tokens: 50
@@ -9,13 +9,13 @@ chunking:
 
 extraction:
   max_items_per_chunk: 6
-  model: claude-opus-4-6
-  max_tokens: 2048
+  model: claude-sonnet-4-6
+  max_tokens: 1024
 
 grounding:
   inferential_threshold: 0.7
-  model: claude-opus-4-6
-  max_tokens: 1024
+  model: claude-haiku-4-5-20251001
+  max_tokens: 512
 
 allocation:
   min_claim_tokens: 5

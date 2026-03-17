@@ -18,3 +18,5 @@ Evidence: {{evidence_text}}
 - Front must describe when/where to apply the heuristic
 - Back must give the actionable guideline
 - Note any important exceptions or failure modes
+- If mathematical notation is needed, use \(...\) for inline math and \[...\] for display math
+- Never use $...$ or $$...$$ delimiters

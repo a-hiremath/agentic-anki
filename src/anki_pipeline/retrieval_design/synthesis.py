@@ -10,6 +10,7 @@ from anki_pipeline.identity import generate_id, note_identity_hash
 from anki_pipeline.llm.client import LLMClient
 from anki_pipeline.llm.schemas import SynthesizedBasicNote, SynthesizedClozeNote
 from anki_pipeline.models import EvidenceSpan, KnowledgeItem, NoteCandidate, SynthesisAttempt
+from anki_pipeline.normalize import normalize_math_delimiters
 from anki_pipeline.prompt_registry import PromptRegistry
 
 logger = logging.getLogger(__name__)
@@ -70,6 +71,7 @@ def synthesize_notes(
             user=user,
             max_tokens=1024,
         )
+        raw_response = json.dumps(result.model_dump())
     except Exception as exc:
         logger.error("Synthesis failed for item %s: %s", item.item_id, exc)
         attempt.error_message = str(exc)
@@ -86,20 +88,23 @@ def synthesize_notes(
     # Build candidate
     if note_type == NoteType.stem_basic:
         assert isinstance(result, SynthesizedBasicNote)
+        front = normalize_math_delimiters(result.front)
+        back = normalize_math_delimiters(result.back)
+        back_extra = normalize_math_delimiters(result.back_extra) if result.back_extra else None
         identity = note_identity_hash(
             NoteType.stem_basic,
-            front=result.front,
-            back=result.back,
-            back_extra=result.back_extra,
+            front=front,
+            back=back,
+            back_extra=back_extra,
         )
         candidate = NoteCandidate(
             candidate_id=generate_id(),
             run_id=run_id,
             knowledge_item_id=item.item_id,
             note_type=NoteType.stem_basic,
-            front=result.front,
-            back=result.back,
-            back_extra=result.back_extra,
+            front=front,
+            back=back,
+            back_extra=back_extra,
             source_field=source_field,
             tags=tags,
             note_identity_hash=identity,
@@ -108,18 +113,20 @@ def synthesize_notes(
         )
     else:
         assert isinstance(result, SynthesizedClozeNote)
+        text = normalize_math_delimiters(result.text)
+        back_extra = normalize_math_delimiters(result.back_extra) if result.back_extra else None
         identity = note_identity_hash(
             NoteType.stem_cloze,
-            text=result.text,
-            back_extra=result.back_extra,
+            text=text,
+            back_extra=back_extra,
         )
         candidate = NoteCandidate(
             candidate_id=generate_id(),
             run_id=run_id,
             knowledge_item_id=item.item_id,
             note_type=NoteType.stem_cloze,
-            text=result.text,
-            back_extra=result.back_extra,
+            text=text,
+            back_extra=back_extra,
             source_field=source_field,
             tags=tags,
             note_identity_hash=identity,
@@ -127,7 +134,7 @@ def synthesize_notes(
             synthesis_attempt_id=attempt.attempt_id,
         )
 
-    attempt.raw_response = json.dumps(result.model_dump())
+    attempt.raw_response = raw_response
     attempt.notes_accepted = 1
     return [candidate], attempt
 

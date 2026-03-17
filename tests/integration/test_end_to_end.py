@@ -9,8 +9,9 @@ from anki_pipeline.config import PipelineConfig
 from anki_pipeline.enums import AssessmentLabel, KnowledgeItemType
 from anki_pipeline.identity import generate_id
 from anki_pipeline.llm.schemas import (
-    ExtractionResponse, ExtractedItem, GroundingResponse,
-    RankingResponse, RankedItem, SynthesizedBasicNote
+    BatchGroundingItem, BatchGroundingResponse, ExtractionResponse,
+    ExtractedItem, GroundingResponse, RankingResponse, RankedItem,
+    SynthesizedBasicNote,
 )
 from anki_pipeline.prompt_registry import PromptRegistry
 from anki_pipeline.retrieval_design.export import export_deck
@@ -32,6 +33,14 @@ def make_mock_llm(item_id: str) -> MockLLMClient:
                 claim="The definite integral is the limit of a Riemann sum.",
                 why_memorable="Connects discrete sums to continuous areas.",
             )
+        ]),
+        BatchGroundingResponse: BatchGroundingResponse(assessments=[
+            BatchGroundingItem(
+                claim_index=0,
+                label=AssessmentLabel.direct,
+                score=0.95,
+                evidence_text="The definite integral",
+            ),
         ]),
         GroundingResponse: GroundingResponse(
             label=AssessmentLabel.direct,
@@ -76,11 +85,16 @@ class TestDocumentPipeline:
             items = conn.execute("SELECT COUNT(*) FROM knowledge_items").fetchone()[0]
             candidates = conn.execute("SELECT COUNT(*) FROM note_candidates").fetchone()[0]
             validations = conn.execute("SELECT COUNT(*) FROM validation_results").fetchone()[0]
+            candidate_back = conn.execute(
+                "SELECT back FROM note_candidates WHERE back IS NOT NULL LIMIT 1"
+            ).fetchone()
 
         assert sources >= 1
         assert chunks >= 1
         assert items >= 0  # could be 0 if all filtered
         assert validations >= 0
+        if candidate_back:
+            assert r"\(" in candidate_back[0]
 
     def test_duplicate_ingestion_no_duplicate_sources(self, tmp_path: Path):
         """Ingesting the same file twice should reuse the existing source."""

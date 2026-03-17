@@ -19,3 +19,5 @@ Evidence: {{evidence_text}}
 - Must use {{c1::...}} syntax (at least one cloze)
 - Each cloze should test a meaningful, non-trivial property
 - The stem (non-cloze parts) must make the cloze unambiguous
+- If mathematical notation is needed, use \(...\) for inline math and \[...\] for display math
+- Never use $...$ or $$...$$ delimiters

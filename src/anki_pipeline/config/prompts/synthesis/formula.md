@@ -16,6 +16,8 @@ Evidence: {{evidence_text}}
 
 ## Requirements
 - Front must NOT show the formula itself
-- Back must show the complete formula in LaTeX ($$...$$)
+- Back must show the complete formula in MathJax using \[...\] for display math
 - Define every variable and constant
 - Note any constraints or assumptions
+- Use \(...\) for any inline mathematical notation
+- Never use $...$ or $$...$$ delimiters

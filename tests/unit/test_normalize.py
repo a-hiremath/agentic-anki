@@ -3,7 +3,9 @@
 import pytest
 
 from anki_pipeline.normalize import (
+    has_raw_math_dollar_delimiters,
     normalize_cosmetic,
+    normalize_math_delimiters,
     normalize_for_claim_hash,
     normalize_for_note_hash,
     normalize_for_source_hash,
@@ -96,3 +98,43 @@ class TestNormalizeCosmetic:
         a = normalize_cosmetic("Hello, world!")
         b = normalize_cosmetic("Hello world")
         assert a == b
+
+
+class TestNormalizeMathDelimiters:
+    def test_converts_inline_math(self):
+        text = "The derivative of $x^n$ is $nx^{n-1}$."
+        result = normalize_math_delimiters(text)
+        assert result == r"The derivative of \(x^n\) is \(nx^{n-1}\)."
+
+    def test_converts_display_math(self):
+        text = "Use $$\\int_a^b f(x)\\,dx$$ here."
+        result = normalize_math_delimiters(text)
+        assert result == r"Use \[\int_a^b f(x)\,dx\] here."
+
+    def test_leaves_escaped_dollars(self):
+        text = r"Price is \$100 and math is $x$."
+        result = normalize_math_delimiters(text)
+        assert result == r"Price is \$100 and math is \(x\)."
+
+    def test_leaves_currency_alone(self):
+        text = "Tickets cost $100 and $200 depending on section."
+        result = normalize_math_delimiters(text)
+        assert result == text
+
+    def test_leaves_inline_code_alone(self):
+        text = "Shell variable `$HOME` differs from math $x$."
+        result = normalize_math_delimiters(text)
+        assert result == r"Shell variable `$HOME` differs from math \(x\)."
+
+    def test_leaves_code_fence_alone(self):
+        text = "```bash\nexport PATH=$HOME/bin\n```\nThen compute $x^2$."
+        result = normalize_math_delimiters(text)
+        assert result == "```bash\nexport PATH=$HOME/bin\n```\nThen compute \\(x^2\\)."
+
+    def test_unbalanced_dollar_is_unchanged(self):
+        text = "This costs $100 today."
+        assert normalize_math_delimiters(text) == text
+
+    def test_detector_matches_convertible_math_only(self):
+        assert has_raw_math_dollar_delimiters("Use $x^2$.")
+        assert not has_raw_math_dollar_delimiters("Price is $100 today.")

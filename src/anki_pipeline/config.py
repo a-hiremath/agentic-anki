@@ -29,14 +29,14 @@ class ChunkingConfig(StrictConfig):
 
 class ExtractionConfig(StrictConfig):
     max_items_per_chunk: int = 6
-    model: str = "claude-opus-4-6"
-    max_tokens: int = 2048
+    model: str = "claude-sonnet-4-6"
+    max_tokens: int = 1024
 
 
 class GroundingConfig(StrictConfig):
     inferential_threshold: float = 0.7
-    model: str = "claude-opus-4-6"
-    max_tokens: int = 1024
+    model: str = "claude-haiku-4-5-20251001"
+    max_tokens: int = 512
 
 
 class AllocationConfig(StrictConfig):
@@ -82,14 +82,14 @@ class RankingConfig(StrictConfig):
             "unknown": 999.0,
         }
     )
-    model: str = "claude-opus-4-6"
+    model: str = "claude-sonnet-4-6"
     max_tokens: int = 1024
 
 
 class PipelineConfig(StrictConfig):
     """Top-level pipeline configuration."""
     db_path: str = "pipeline.db"
-    model: str = "claude-opus-4-6"
+    model: str = "claude-sonnet-4-6"
     chunking: ChunkingConfig = Field(default_factory=ChunkingConfig)
     extraction: ExtractionConfig = Field(default_factory=ExtractionConfig)
     grounding: GroundingConfig = Field(default_factory=GroundingConfig)

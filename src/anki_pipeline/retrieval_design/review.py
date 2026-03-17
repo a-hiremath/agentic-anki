@@ -13,15 +13,15 @@ from pathlib import Path
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Prompt
-from rich.table import Table
 from rich.text import Text
 
 from anki_pipeline.config import ReviewConfig
 from anki_pipeline.enums import EditType, NoteType, ProvenanceKind, ReviewDecision
 from anki_pipeline.identity import generate_id, note_identity_hash
 from anki_pipeline.models import NoteCandidate, ReviewAction, ReviewedNote
-from anki_pipeline.normalize import normalize_cosmetic
+from anki_pipeline.normalize import normalize_cosmetic, normalize_math_delimiters
 from anki_pipeline.retrieval_design.validation import validate_note
+from anki_pipeline.terminal_math import render_latex_for_terminal
 from anki_pipeline.storage import (
     Database,
     NoteCandidateRepo,
@@ -140,25 +140,33 @@ def _review_single(
 
 def _display_candidate(candidate: NoteCandidate) -> None:
     """Render a candidate note to the terminal."""
+    content = Text()
     if candidate.note_type == NoteType.stem_basic:
-        content = (
-            f"[bold cyan]FRONT:[/bold cyan]\n{candidate.front}\n\n"
-            f"[bold cyan]BACK:[/bold cyan]\n{candidate.back}"
-        )
+        content.append("FRONT:\n", style="bold cyan")
+        content.append(render_latex_for_terminal(candidate.front))
+        content.append("\n\n")
+        content.append("BACK:\n", style="bold cyan")
+        content.append(render_latex_for_terminal(candidate.back))
         if candidate.back_extra:
-            content += f"\n\n[dim]EXTRA: {candidate.back_extra}[/dim]"
+            content.append("\n\n")
+            content.append("EXTRA: ", style="dim")
+            content.append(render_latex_for_terminal(candidate.back_extra), style="dim")
     else:
-        content = f"[bold cyan]TEXT:[/bold cyan]\n{candidate.text}"
+        content.append("TEXT:\n", style="bold cyan")
+        content.append(render_latex_for_terminal(candidate.text))
         if candidate.back_extra:
-            content += f"\n\n[dim]EXTRA: {candidate.back_extra}[/dim]"
+            content.append("\n\n")
+            content.append("EXTRA: ", style="dim")
+            content.append(render_latex_for_terminal(candidate.back_extra), style="dim")
 
-    meta = (
-        f"[dim]Type: {candidate.note_type.value} | "
+    meta = Text(style="dim")
+    meta.append(
+        f"Type: {candidate.note_type.value} | "
         f"Provenance: {candidate.provenance_kind.value} | "
-        f"Tags: {', '.join(candidate.tags) or 'none'}[/dim]"
+        f"Tags: {', '.join(candidate.tags) or 'none'}"
     )
     if candidate.source_field:
-        meta += f"\n[dim]Source: {candidate.source_field}[/dim]"
+        meta.append(f"\nSource: {candidate.source_field}")
 
     console.print(Panel(content, title=f"[bold]{candidate.note_type.value}[/bold]"))
     console.print(meta)
@@ -255,6 +263,17 @@ def _build_reviewed_note(
                 provenance = ProvenanceKind.human_edited
             elif provenance != ProvenanceKind.user_attested:
                 provenance = ProvenanceKind.mixed
+
+    # Canonicalize math delimiters for all review outcomes, including straight accepts,
+    # so older candidates with raw dollar math are fixed before hashing/export.
+    if front is not None:
+        front = normalize_math_delimiters(front)
+    if back is not None:
+        back = normalize_math_delimiters(back)
+    if text is not None:
+        text = normalize_math_delimiters(text)
+    if back_extra is not None:
+        back_extra = normalize_math_delimiters(back_extra)
 
     # Recompute identity hash with final fields
     if candidate.note_type == NoteType.stem_basic:

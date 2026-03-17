@@ -18,3 +18,5 @@ Evidence: {{evidence_text}}
 - Front must state the general rule clearly
 - Back must specify exact conditions for the exception
 - Do NOT generalize the exception beyond its scope
+- If mathematical notation is needed, use \(...\) for inline math and \[...\] for display math
+- Never use $...$ or $$...$$ delimiters

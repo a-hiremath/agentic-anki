@@ -34,13 +34,24 @@ class LLMClient:
         self,
         model: str = "claude-opus-4-6",
         api_key: str | None = None,
-        max_retries: int = 3,
+        max_retries: int = 1,
     ) -> None:
         import anthropic
 
         self.model = model
         self.max_retries = max_retries
         self._client = anthropic.Anthropic(api_key=api_key) if api_key else anthropic.Anthropic()
+        self._total_input_tokens: int = 0
+        self._total_output_tokens: int = 0
+        self._total_calls: int = 0
+
+    def usage_summary(self) -> dict[str, int]:
+        """Return cumulative token usage statistics."""
+        return {
+            "total_input_tokens": self._total_input_tokens,
+            "total_output_tokens": self._total_output_tokens,
+            "total_calls": self._total_calls,
+        }
 
     def structured_call(
         self,
@@ -96,26 +107,28 @@ class LLMClient:
         tool_def: dict[str, Any],
         tool_choice_name: str,
     ) -> Any:
-        return self._client.messages.create(
+        response = self._client.messages.create(
             model=self.model,
             max_tokens=max_tokens,
-            system=system,
+            system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": user}],
             tools=[tool_def],
             tool_choice={"type": "tool", "name": tool_choice_name},
         )
-
-    def raw_call(self, system: str, user: str, max_tokens: int = 1024) -> str:
-        """Simple text-mode call without structured output."""
-        response = self._client.messages.create(
-            model=self.model,
-            max_tokens=max_tokens,
-            system=system,
-            messages=[{"role": "user", "content": user}],
-        )
-        return "".join(
-            block.text for block in response.content if block.type == "text"
-        )
+        # Track token usage
+        usage = getattr(response, "usage", None)
+        if usage:
+            input_tok = getattr(usage, "input_tokens", 0)
+            output_tok = getattr(usage, "output_tokens", 0)
+            self._total_input_tokens += input_tok
+            self._total_output_tokens += output_tok
+            self._total_calls += 1
+            logger.info(
+                "LLM call: input=%d output=%d (cumulative: in=%d out=%d calls=%d)",
+                input_tok, output_tok,
+                self._total_input_tokens, self._total_output_tokens, self._total_calls,
+            )
+        return response
 
 
 def _schema_to_tool_name(schema_class: type[BaseModel]) -> str:

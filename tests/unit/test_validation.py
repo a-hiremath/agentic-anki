@@ -21,7 +21,7 @@ def make_basic(front="What is a derivative?", back="The instantaneous rate of ch
     )
 
 
-def make_cloze(text="The derivative of $x^n$ is {{c1::$nx^{n-1}$}}.", **kwargs) -> NoteCandidate:
+def make_cloze(text="The derivative of \\(x^n\\) is {{c1::\\(nx^{n-1}\\)}}.", **kwargs) -> NoteCandidate:
     return NoteCandidate(
         candidate_id=generate_id(),
         run_id="run1",
@@ -73,6 +73,11 @@ class TestBasicValidation:
         assert result.passed  # warning, not failure
         assert "vague_pronoun_front" in result.warning_codes
 
+    def test_raw_dollar_math_is_warning_not_failure(self):
+        result = validate_note(make_basic(back="The formula is $x^2$."), config)
+        assert result.passed
+        assert "raw_math_delimiters_back" in result.warning_codes
+
 
 class TestClozeValidation:
     def test_valid_cloze_passes(self):
@@ -95,6 +100,11 @@ class TestClozeValidation:
         result = validate_note(make_cloze(text=long_text), config)
         assert not result.passed
         assert any("text_too_long" in code for code in result.failure_codes)
+
+    def test_currency_does_not_trigger_math_warning(self):
+        result = validate_note(make_cloze(text="The fee is {{c1::$100}} per attempt."), config)
+        assert result.passed
+        assert "raw_math_delimiters_text" not in result.warning_codes
 
 
 class TestTagValidation:

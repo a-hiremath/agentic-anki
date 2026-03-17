@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import collections
 import datetime
 import logging
 from pathlib import Path
@@ -32,11 +33,13 @@ class PipelineOrchestrator:
         db: Database,
         llm: LLMClient,
         prompts: PromptRegistry,
+        grounding_llm: LLMClient | None = None,
     ) -> None:
         self.config = config
         self.db = db
         self.llm = llm
         self.prompts = prompts
+        self.grounding_llm = grounding_llm or llm
 
     # ------------------------------------------------------------------
     # Public entry points
@@ -97,7 +100,7 @@ class PipelineOrchestrator:
         from anki_pipeline.distillation.ingestion import ingest_source
         from anki_pipeline.distillation.chunking import chunk_source
         from anki_pipeline.distillation.extraction import extract_from_chunk
-        from anki_pipeline.distillation.grounding import assess_grounding
+        from anki_pipeline.distillation.grounding import assess_grounding_batch
         from anki_pipeline.allocation.filtering import filter_items
         from anki_pipeline.allocation.scoring import score_items
         from anki_pipeline.allocation.selection import select_within_budget
@@ -153,19 +156,27 @@ class PipelineOrchestrator:
                         all_items.append(item)
         state.complete_stage(RunStage.extraction)
 
-        # Stage: Grounding
+        # Stage: Grounding (batched by chunk)
         state.begin_stage(RunStage.grounding)
         assessments: dict[str, Any] = {}
         with self.db.connect() as conn:
             chunk_map = {c.chunk_id: c for c in chunks}
+            # Group items by chunk_id for batch processing
+            items_by_chunk: dict[str, list[KnowledgeItem]] = collections.defaultdict(list)
             for item in all_items:
                 if item.chunk_id and item.chunk_id in chunk_map:
-                    assessment = assess_grounding(
-                        item, chunk_map[item.chunk_id], source,
-                        self.llm, self.prompts, run_id=run.run_id
-                    )
+                    items_by_chunk[item.chunk_id].append(item)
+
+            for chunk_id, chunk_items in items_by_chunk.items():
+                batch_assessments = assess_grounding_batch(
+                    chunk_items, chunk_map[chunk_id],
+                    self.grounding_llm, self.prompts,
+                    run_id=run.run_id,
+                    max_tokens=self.config.grounding.max_tokens,
+                )
+                for assessment in batch_assessments:
                     GroundingAssessmentRepo.insert(conn, assessment)
-                    assessments[item.item_id] = assessment
+                    assessments[assessment.knowledge_item_id] = assessment
         state.complete_stage(RunStage.grounding)
 
         # Stage: Filtering

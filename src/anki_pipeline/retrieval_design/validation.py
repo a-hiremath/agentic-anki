@@ -12,6 +12,7 @@ from anki_pipeline.config import ValidationConfig
 from anki_pipeline.enums import NoteType
 from anki_pipeline.identity import generate_id
 from anki_pipeline.models import NoteCandidate, ValidationResult
+from anki_pipeline.normalize import has_raw_math_dollar_delimiters
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,8 @@ def validate_note(note: NoteCandidate, config: ValidationConfig) -> ValidationRe
     # Source field check (warning only)
     if not note.source_field and note.provenance_kind.value != "user_attested":
         warnings.append("missing_source_field")
+
+    _warn_on_raw_math_delimiters(note, warnings)
 
     passed = len(failures) == 0
 
@@ -111,3 +114,15 @@ def _validate_cloze(
     # Warnings
     if _VAGUE_PRONOUN.match(text):
         warnings.append("vague_pronoun_text")
+
+
+def _warn_on_raw_math_delimiters(note: NoteCandidate, warnings: list[str]) -> None:
+    fields = [
+        ("front", note.front),
+        ("back", note.back),
+        ("text", note.text),
+        ("back_extra", note.back_extra),
+    ]
+    for field_name, value in fields:
+        if value and has_raw_math_dollar_delimiters(value):
+            warnings.append(f"raw_math_delimiters_{field_name}")

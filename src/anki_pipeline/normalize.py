@@ -13,6 +13,8 @@ _ZERO_WIDTH_CHARS = re.compile(
 )
 _WHITESPACE_RUN = re.compile(r"[ \t\r\n]+")
 _TRAILING_WHITESPACE_LINE = re.compile(r"[ \t]+$", re.MULTILINE)
+_CODE_SPAN_OR_FENCE = re.compile(r"(```.*?```|`[^`\n]*`)", re.DOTALL)
+_MATH_SIGNAL = re.compile(r"(\\[A-Za-z]+|[\^_{}=<>+\-*/()])")
 
 
 def normalize_for_claim_hash(text: str) -> str:
@@ -82,3 +84,118 @@ def normalize_cosmetic(text: str) -> str:
     text = re.sub(r"[^\w\s]", "", text)
     text = text.lower()
     return text
+
+
+def normalize_math_delimiters(text: str) -> str:
+    """Convert dollar-delimited math into Anki-native MathJax delimiters.
+
+    Rules:
+    - `$$...$$` -> `\\[...\\]`
+    - `$...$` -> `\\(...\\)` when the enclosed content looks like math
+    - Leave escaped dollars and code spans/fences untouched
+    - Avoid converting obvious currency-like prose such as "$100 and $200"
+    """
+    if "$" not in text:
+        return text
+
+    parts: list[str] = []
+    last = 0
+    for match in _CODE_SPAN_OR_FENCE.finditer(text):
+        parts.append(_normalize_math_segment(text[last:match.start()]))
+        parts.append(match.group(0))
+        last = match.end()
+    parts.append(_normalize_math_segment(text[last:]))
+    return "".join(parts)
+
+
+def has_raw_math_dollar_delimiters(text: str) -> bool:
+    """Return True when the text still contains convertible raw dollar math."""
+    return normalize_math_delimiters(text) != text
+
+
+def _normalize_math_segment(text: str) -> str:
+    return _normalize_inline_math(_normalize_display_math(text))
+
+
+def _normalize_display_math(text: str) -> str:
+    out: list[str] = []
+    i = 0
+    while i < len(text):
+        if _starts_unescaped(text, i, "$$"):
+            end = _find_matching_double_dollar(text, i + 2)
+            if end != -1:
+                out.append(r"\[" + text[i + 2:end] + r"\]")
+                i = end + 2
+                continue
+        out.append(text[i])
+        i += 1
+    return "".join(out)
+
+
+def _normalize_inline_math(text: str) -> str:
+    out: list[str] = []
+    i = 0
+    while i < len(text):
+        if _is_single_dollar(text, i):
+            end = _find_matching_single_dollar(text, i + 1)
+            if end != -1:
+                content = text[i + 1:end]
+                if _should_convert_inline_math(content):
+                    out.append(r"\(" + content + r"\)")
+                    i = end + 1
+                    continue
+        out.append(text[i])
+        i += 1
+    return "".join(out)
+
+
+def _should_convert_inline_math(content: str) -> bool:
+    stripped = content.strip()
+    if not stripped:
+        return False
+    if "\n" in stripped:
+        return False
+    if " " in stripped and not _MATH_SIGNAL.search(stripped):
+        return False
+    return True
+
+
+def _find_matching_double_dollar(text: str, start: int) -> int:
+    i = start
+    while i < len(text) - 1:
+        if _starts_unescaped(text, i, "$$"):
+            return i
+        i += 1
+    return -1
+
+
+def _find_matching_single_dollar(text: str, start: int) -> int:
+    i = start
+    while i < len(text):
+        if _is_single_dollar(text, i):
+            return i
+        i += 1
+    return -1
+
+
+def _starts_unescaped(text: str, index: int, token: str) -> bool:
+    return text.startswith(token, index) and not _is_escaped(text, index)
+
+
+def _is_single_dollar(text: str, index: int) -> bool:
+    if index >= len(text) or text[index] != "$" or _is_escaped(text, index):
+        return False
+    if index > 0 and text[index - 1] == "$":
+        return False
+    if index + 1 < len(text) and text[index + 1] == "$":
+        return False
+    return True
+
+
+def _is_escaped(text: str, index: int) -> bool:
+    backslashes = 0
+    i = index - 1
+    while i >= 0 and text[i] == "\\":
+        backslashes += 1
+        i -= 1
+    return backslashes % 2 == 1

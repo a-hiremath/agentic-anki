@@ -19,3 +19,5 @@ Evidence: {{evidence_text}}
 - Must use {{c1::...}} syntax (at least one cloze)
 - Test the essential steps, not trivial ones
 - Steps must be ordered logically
+- If mathematical notation is needed, use \(...\) for inline math and \[...\] for display math
+- Never use $...$ or $$...$$ delimiters

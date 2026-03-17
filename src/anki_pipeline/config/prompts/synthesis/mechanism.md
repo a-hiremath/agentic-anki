@@ -17,4 +17,5 @@ Evidence: {{evidence_text}}
 ## Requirements
 - Front must describe the process or system in question
 - Back must explain the mechanism step-by-step or causally
-- Use LaTeX for mathematical notation where appropriate
+- If mathematical notation is needed, use \(...\) for inline math and \[...\] for display math
+- Never use $...$ or $$...$$ delimiters

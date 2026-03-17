@@ -36,6 +36,17 @@ class GroundingResponse(StrictLLMModel):
     reasoning: str | None = None
 
 
+class BatchGroundingItem(StrictLLMModel):
+    claim_index: int  # 0-based index matching input order
+    label: AssessmentLabel
+    score: float = Field(ge=0.0, le=1.0)
+    evidence_text: str | None = None
+
+
+class BatchGroundingResponse(StrictLLMModel):
+    assessments: list[BatchGroundingItem]
+
+
 # ---------------------------------------------------------------------------
 # Ranking schemas
 # ---------------------------------------------------------------------------
