@@ -137,12 +137,15 @@ def assess_grounding_batch(
     ]
     user = template.render(chunk_text=chunk.text, claims_json=json.dumps(claims))
 
+    # Scale max_tokens with batch size — each item needs ~100 tokens of output
+    effective_max_tokens = max(max_tokens, 128 * len(items))
+
     try:
         response: BatchGroundingResponse = llm.structured_call(
             output_schema=BatchGroundingResponse,
             system=system,
             user=user,
-            max_tokens=max_tokens,
+            max_tokens=effective_max_tokens,
         )
     except Exception as exc:
         logger.error("Batch grounding failed for chunk %s: %s", chunk.chunk_id, exc)

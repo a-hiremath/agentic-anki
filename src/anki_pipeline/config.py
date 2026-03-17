@@ -36,7 +36,7 @@ class ExtractionConfig(StrictConfig):
 class GroundingConfig(StrictConfig):
     inferential_threshold: float = 0.7
     model: str = "claude-haiku-4-5-20251001"
-    max_tokens: int = 512
+    max_tokens: int = 1024
 
 
 class AllocationConfig(StrictConfig):

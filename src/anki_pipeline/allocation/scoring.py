@@ -51,12 +51,15 @@ def score_items(
         items_json=items_json,
     )
 
+    # Scale max_tokens with item count — each ranked item needs ~40 output tokens
+    effective_max_tokens = max(config.max_tokens, 48 * len(items))
+
     try:
         response: RankingResponse = llm.structured_call(
             output_schema=RankingResponse,
             system=system,
             user=user,
-            max_tokens=config.max_tokens,
+            max_tokens=effective_max_tokens,
         )
         ranked_map = {r.item_id: r for r in response.rankings}
     except Exception as exc:
